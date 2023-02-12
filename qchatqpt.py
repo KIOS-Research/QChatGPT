@@ -34,6 +34,7 @@ from .resources import *
 from .qchatqpt_dialog import qchatgptDialog
 import os
 import base64
+import sys
 
 API_EXIST = False
 try:
