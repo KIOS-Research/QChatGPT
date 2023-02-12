@@ -46,7 +46,6 @@ except:
         os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install openai')
     finally:
         import openai
-
         API_EXIST = True
 
 
@@ -230,7 +229,12 @@ class qchatgpt:
         self.dlg.send_chat.setEnabled(False)
 
         try:
+            ask = True
             self.question = self.dlg.question.text()
+            if self.question == "":
+                self.dlg.send_chat.setEnabled(True)
+                ask = False
+                return
             cursor = self.dlg.chatgpt_ans.textCursor()
             self.dlg.chatgpt_ans.insertPlainText("\n\n")
             cursor.insertHtml('''<p><span style="background: white;">{} </span>'''.format(
@@ -247,25 +251,26 @@ class qchatgpt:
             self.answers.append(newlinesp)
             self.dlg.chatgpt_ans.repaint()
         finally:
-            self.response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=self.question,
-                temperature=0.9,
-                max_tokens=150,
-                top_p=1,
-                frequency_penalty=0.0,
-                presence_penalty=0.6,
-            )
+            if ask:
+                self.response = openai.Completion.create(
+                    engine="text-davinci-003",
+                    prompt=self.question,
+                    temperature=0.9,
+                    max_tokens=150,
+                    top_p=1,
+                    frequency_penalty=0.0,
+                    presence_penalty=0.6,
+                )
 
-            last_ans = "AI: " + self.response['choices'][0]['text']
-            self.answers.append(last_ans)
-            cursor = self.dlg.chatgpt_ans.textCursor()
-            cursor.insertHtml('''<p><span style="background: #F7F7F8;">{} </span>'''.format(last_ans))
-            self.dlg.chatgpt_ans.repaint()
-            self.dlg.question.setText('')
-            self.dlg.chatgpt_ans.verticalScrollBar().setValue(
-                self.dlg.chatgpt_ans.verticalScrollBar().maximum())
-            self.dlg.send_chat.setEnabled(True)
+                last_ans = "AI: " + self.response['choices'][0]['text']
+                self.answers.append(last_ans)
+                cursor = self.dlg.chatgpt_ans.textCursor()
+                cursor.insertHtml('''<p><span style="background: #F7F7F8;">{} </span>'''.format(last_ans))
+                self.dlg.chatgpt_ans.repaint()
+                self.dlg.question.setText('')
+                self.dlg.chatgpt_ans.verticalScrollBar().setValue(
+                    self.dlg.chatgpt_ans.verticalScrollBar().maximum())
+                self.dlg.send_chat.setEnabled(True)
 
     def export_messages(self):
         FILENAME = QFileDialog.getSaveFileName(None, 'Export ChatGPT answers', os.path.join(
@@ -308,7 +313,6 @@ class qchatgpt:
         self.dlg.show()
 
         self.dlg.question.setFocus(True)
-
         self.dlg.send_chat.clicked.connect(self.send_message)
         self.dlg.export_ans.clicked.connect(self.export_messages)
         self.dlg.chatgpt_ans.clear()
