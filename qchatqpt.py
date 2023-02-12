@@ -250,6 +250,8 @@ class qchatgpt:
             self.dlg.chatgpt_ans.insertPlainText(newlinesp)
             self.answers.append(newlinesp)
             self.dlg.chatgpt_ans.repaint()
+            self.dlg.chatgpt_ans.verticalScrollBar().setValue(
+                self.dlg.chatgpt_ans.verticalScrollBar().maximum())
         finally:
             if ask:
                 self.response = openai.Completion.create(
