@@ -1,0 +1,1 @@
+"C:\Program Files\QGIS 3.26.2\apps\Python39\Scripts\pyrcc5.exe" resources.qrc -o resources.py
