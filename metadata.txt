@@ -12,7 +12,7 @@ email=mariosmsk@gmail.com
 
 about=A plugin integration between QGIS and openai API. Displays the results from openai in QGIS.
 
-tracker=https://github.com/Mariosmsk/QChatGPT/issue
+tracker=https://github.com/Mariosmsk/QChatGPT/issues
 repository=https://github.com/Mariosmsk/QChatGPT
 # End of mandatory metadata
 
