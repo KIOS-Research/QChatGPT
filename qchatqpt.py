@@ -36,14 +36,15 @@ import os
 import base64
 import sys
 
+from .install_packages.check_dependencies import check
+
 API_EXIST = False
 try:
     import openai
-
     API_EXIST = True
 except:
     try:
-        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install openai')
+        check(['openai'])
     finally:
         import openai
         API_EXIST = True
