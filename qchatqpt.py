@@ -266,8 +266,12 @@ class qchatgpt:
 
                 last_ans = "AI: " + self.response['choices'][0]['text']
                 self.answers.append(last_ans)
-                cursor = self.dlg.chatgpt_ans.textCursor()
-                cursor.insertHtml('''<p><span style="background: #F7F7F8;">{} </span>'''.format(last_ans))
+                
+                # Initial implementation. Doesn't preserve newlines
+                #cursor = self.dlg.chatgpt_ans.textCursor()
+                #cursor.insertHtml('''<p><span style="background: #F7F7F8;">{} </span>'''.format(last_ans))
+                self.dlg.chatgpt_ans.insertPlainText(last_ans)
+                
                 self.dlg.chatgpt_ans.repaint()
                 self.dlg.question.setText('')
                 self.dlg.chatgpt_ans.verticalScrollBar().setValue(
