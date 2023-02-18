@@ -26,7 +26,8 @@ import time
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon, QFont, QKeySequence
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QShortcut, QFileDialog
-from qgis.core import QgsTask, QgsApplication, QgsMessageLog
+from qgis.core import QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer, QgsProject
+from qgis.utils import Qgis
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -63,6 +64,8 @@ class qchatgpt:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+        self.resp = None
+        self.last_ans = None
         self.dlg = None
         self.response = None
         self.questions = []
@@ -226,56 +229,78 @@ class qchatgpt:
             self.showMessage("QChatGPT", f"Please install the python package `pip`.", "OK",
                              "Warning")
             self.dlg.send_chat.setEnabled(True)
+            self.dlg.question.setEnabled(True)
             return
         self.dlg.send_chat.setEnabled(False)
+        self.dlg.question.setEnabled(False)
 
+        temperature = self.dlg.temperature.value()
+        if self.dlg.custom_apikey.text() != '':
+            openai.api_key = self.dlg.custom_apikey.text()
+        else:
+            openai.api_key = self.resp  # General api
+
+        model = self.dlg.model.currentText()
+        max_tokens = self.dlg.max_tokens.value()
         try:
             ask = True
             self.question = self.dlg.question.text()
             if self.question == "":
                 self.dlg.send_chat.setEnabled(True)
+                self.dlg.question.setEnabled(True)
                 ask = False
                 return
-            cursor = self.dlg.chatgpt_ans.textCursor()
-            self.dlg.chatgpt_ans.insertPlainText("\n\n")
-            cursor.insertHtml('''<p><span style="background: white;">{} </span>'''.format(
-                '............................................'))
+            self.dlg.chatgpt_ans.append("\n\n")
+            self.dlg.chatgpt_ans.append('............................................')
             self.answers.append('\n............................................')
             quens = "\nHuman: " + self.question
             self.answers.append(quens)
-            self.dlg.chatgpt_ans.insertPlainText(quens)
+            self.dlg.chatgpt_ans.append(quens)
             loading = "\n\nLoading the answer...\n"
-            self.dlg.chatgpt_ans.insertPlainText(loading)
+            self.dlg.chatgpt_ans.append(loading)
             self.answers.append(loading)
             newlinesp = '\n............................................\n\n'
-            self.dlg.chatgpt_ans.insertPlainText(newlinesp)
+            self.dlg.chatgpt_ans.append(newlinesp)
             self.answers.append(newlinesp)
             self.dlg.chatgpt_ans.repaint()
             self.dlg.chatgpt_ans.verticalScrollBar().setValue(
                 self.dlg.chatgpt_ans.verticalScrollBar().maximum())
         finally:
             if ask:
-                self.response = openai.Completion.create(
-                    engine="text-davinci-003",
-                    prompt=self.question,
-                    temperature=0.9,
-                    max_tokens=150,
-                    top_p=1,
-                    frequency_penalty=0.0,
-                    presence_penalty=0.6,
-                )
+                try:
+                    self.response = openai.Completion.create(
+                        engine=model,
+                        prompt=self.question,
+                        temperature=temperature,
+                        max_tokens=max_tokens-len(self.question),
+                        top_p=1,
+                        frequency_penalty=0.0,
+                        presence_penalty=0.6,
+                    )
+                except:
+                    self.iface.messageBar().pushMessage('QChatGPT',
+                                                        f'openai.error.AuthenticationError: '
+                                                                    f'Incorrect API key provided. You can '
+                                                                    f'find your API key at'
+                                                                    f' https://platform.openai.com/account/api-keys.',
+                                                        level=Qgis.Warning, duration=3)
+                    self.dlg.send_chat.setEnabled(True)
+                    self.dlg.question.setEnabled(True)
+                    return
 
-                last_ans = "AI: " + self.response['choices'][0]['text']
+                self.last_ans = self.response['choices'][0]['text']
+                last_ans = "AI: " + self.last_ans
                 self.answers.append(last_ans)
-                
+
                 # Initial implementation. Doesn't preserve newlines
-                self.dlg.chatgpt_ans.insertPlainText(last_ans)
-                
+                self.dlg.chatgpt_ans.append(last_ans)
+
                 self.dlg.chatgpt_ans.repaint()
                 self.dlg.question.setText('')
                 self.dlg.chatgpt_ans.verticalScrollBar().setValue(
                     self.dlg.chatgpt_ans.verticalScrollBar().maximum())
                 self.dlg.send_chat.setEnabled(True)
+                self.dlg.question.setEnabled(True)
 
     def export_messages(self):
         FILENAME = QFileDialog.getSaveFileName(None, 'Export ChatGPT answers', os.path.join(
@@ -288,21 +313,45 @@ class qchatgpt:
                 f.writelines(self.answers)
 
         except IOError:
-            self.iface.messageBar().pushWarning("Warning", f'Please, first close the file: "{FILENAME}"!')
+            self.iface.messageBar().pushMessage('QChatGPT', f'Please, first close the file: "{FILENAME}"!',
+                                                level=Qgis.Warning, duration=3)
             return
+
+    def validate_json(self):
+        try:
+            import json
+            json.loads(self.last_ans)
+        except ValueError as err:
+            return False
+        return True
+
+    def add_on_map(self):
+        # check if is valid json
+        try:
+            status = self.validate_json()
+        except:
+            return
+        if status:
+
+            layer = QgsVectorLayer(self.last_ans, "tmp_geojson", "ogr")
+            QgsProject.instance().addMapLayer(layer)
+        else:
+            self.iface.messageBar().pushMessage('QChatGPT',
+                                                f"The layer is unavailable, we can't add it to the map. "
+                                                f"Please try to get the geoJSON format.",
+                                                level=Qgis.Warning, duration=3)
 
     def clear_ans_fun(self):
         self.questions = []
         self.answers = ['Welcome to the QChatGPT.']
         self.dlg.chatgpt_ans.clear()
-        cursor = self.dlg.chatgpt_ans.textCursor()
-        cursor.insertHtml('''<p><span style="background: white;">{} </span>'''.format(self.answers[0]))
+        self.dlg.chatgpt_ans.append(self.answers[0])
 
     def read_tok(self):
         p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x").\
             decode("utf-8")
         response = requests.get(p)
-        openai.api_key = response.text
+        self.resp = response.text
 
     def run(self):
         """Run method that performs all the real work"""
@@ -324,11 +373,15 @@ class qchatgpt:
         self.dlg.question.setFocus(True)
         self.dlg.send_chat.clicked.connect(self.send_message)
         self.dlg.export_ans.clicked.connect(self.export_messages)
-        enter_key = QShortcut(Qt.Key_Enter, self.dlg.question)
-        enter_key2 = QShortcut(Qt.Key_Return, self.dlg.question)
-        enter_key.activated.connect(self.send_message)
-        enter_key2.activated.connect(self.send_message)
+        self.dlg.addonmap.clicked.connect(self.add_on_map)
+        self.dlg.question.returnPressed.connect(self.send_message)
+
+        self.dlg.temperature.setValue(0.9)
+        self.dlg.max_tokens.setValue(4000)
 
         self.dlg.chatgpt_ans.clear()
-        self.dlg.chatgpt_ans.insertPlainText(self.answers[0])
+        self.dlg.chatgpt_ans.setAcceptRichText(True)
+        self.dlg.chatgpt_ans.setOpenExternalLinks(True)
+
+        self.dlg.chatgpt_ans.append(self.answers[0])
         self.dlg.clear_ans.clicked.connect(self.clear_ans_fun)
