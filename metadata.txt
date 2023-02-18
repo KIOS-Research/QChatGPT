@@ -21,9 +21,10 @@ repository=https://github.com/Mariosmsk/QChatGPT
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=2023-02-14  QChatGPT 0.2:
-			 Install dependencies from code (test with ubuntu & windows)
-			 Output needs to include line breaks (Thanks @lymperis-e)
-			 Change the window from dialog to dockwidget.
+		 Install dependencies from code (test with ubuntu & windows)
+		 Output needs to include line breaks (Thanks @lymperis-e)
+		 Change the window from dialog to dockwidget.
+		 Use enter key to send the message. 
 			 
 # Tags are comma separated with spaces allowed
 tags=python,chatqpt,openai

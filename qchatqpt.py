@@ -324,6 +324,11 @@ class qchatgpt:
         self.dlg.question.setFocus(True)
         self.dlg.send_chat.clicked.connect(self.send_message)
         self.dlg.export_ans.clicked.connect(self.export_messages)
+        enter_key = QShortcut(Qt.Key_Enter, self.dlg.question)
+        enter_key2 = QShortcut(Qt.Key_Return, self.dlg.question)
+        enter_key.activated.connect(self.send_message)
+        enter_key2.activated.connect(self.send_message)
+
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.insertPlainText(self.answers[0])
         self.dlg.clear_ans.clicked.connect(self.clear_ans_fun)
