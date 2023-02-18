@@ -4,3 +4,6 @@ A plugin integration between QGIS and openai API. Displays the results from open
 Source: https://openai.com/
 
 ![https://github.com/Mariosmsk/QChatGPT/blob/main/example.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example.png)
+
+![https://github.com/Mariosmsk/QChatGPT/blob/main/example.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example2.png)
+
