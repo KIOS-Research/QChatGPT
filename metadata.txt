@@ -26,6 +26,7 @@ changelog=2023-02-14  QChatGPT 0.2:
 		 Change the window from dialog to dockwidget.
 		 Use enter key to send the message. 
 		 Add tabs for Chat and Settings
+		 Add button to add geoJSON on map.
 			 
 # Tags are comma separated with spaces allowed
 tags=python,chatqpt,openai
