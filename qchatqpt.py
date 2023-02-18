@@ -31,10 +31,11 @@ from qgis.core import QgsTask, QgsApplication, QgsMessageLog
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .qchatqpt_dialog import qchatgptDialog
+from .qchatqpt_dialog import qchatgptDockWidget
 import os
 import base64
 import sys
+import requests
 
 from .install_packages.check_dependencies import check
 
@@ -64,7 +65,6 @@ class qchatgpt:
         # Save reference to the QGIS interface
         self.dlg = None
         self.response = None
-        self.token = None
         self.questions = []
         self.answers = []
         self.question = None
@@ -269,8 +269,6 @@ class qchatgpt:
                 self.answers.append(last_ans)
                 
                 # Initial implementation. Doesn't preserve newlines
-                #cursor = self.dlg.chatgpt_ans.textCursor()
-                #cursor.insertHtml('''<p><span style="background: #F7F7F8;">{} </span>'''.format(last_ans))
                 self.dlg.chatgpt_ans.insertPlainText(last_ans)
                 
                 self.dlg.chatgpt_ans.repaint()
@@ -300,6 +298,12 @@ class qchatgpt:
         cursor = self.dlg.chatgpt_ans.textCursor()
         cursor.insertHtml('''<p><span style="background: white;">{} </span>'''.format(self.answers[0]))
 
+    def read_tok(self):
+        p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x").\
+            decode("utf-8")
+        response = requests.get(p)
+        openai.api_key = response.text
+
     def run(self):
         """Run method that performs all the real work"""
 
@@ -307,18 +311,16 @@ class qchatgpt:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start:
             self.first_start = False
-            self.dlg = qchatgptDialog()
+            self.dlg = qchatgptDockWidget()
 
+        self.read_tok()
         self.questions = []
         self.answers = ['Welcome to the QChatGPT.']
-        p = base64.b64decode("c2stUnlBVnl5OWtuVHpEU3NIWHIxNkZUM0JsYmtGSjNqbTJjVGdOUEdxWFZ6VE9UMUJO").\
-            decode("utf-8")
-        openai.api_key = p
-        self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
-                                Qt.WindowCloseButtonHint)
-        # show the dialog
-        self.dlg.show()
 
+        #self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
+        #                        Qt.WindowCloseButtonHint)
+        # show dockwidget add the bottom.
+        self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
         self.dlg.question.setFocus(True)
         self.dlg.send_chat.clicked.connect(self.send_message)
         self.dlg.export_ans.clicked.connect(self.export_messages)
