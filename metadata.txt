@@ -6,7 +6,7 @@
 name=QChatGPT
 qgisMinimumVersion=3.0
 description=A plugin integration between QGIS and openai API.
-version=0.2
+version=0.3
 author=Marios S. Kyriakou, KIOS Research and Innovation Center of Excellence (KIOS CoE)
 email=mariosmsk@gmail.com
 
@@ -20,9 +20,11 @@ repository=https://github.com/Mariosmsk/QChatGPT
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-02-14  QChatGPT 0.2:
-		 Install dependencies from code (test with ubuntu & windows)
-		 Output needs to include line breaks (Thanks @lymperis-e)
+changelog=2023-02-20  QChatGPT 0.3:
+		 Remove plugin dependencies, confused with python dependencies (Thanks @Gustry).
+	  2023-02-14  QChatGPT 0.2:
+		 Install dependencies from code (test with ubuntu & windows).
+		 Output needs to include line breaks (Thanks @lymperis-e).
 		 Change the window from dialog to dockwidget.
 		 Use enter key to send the message. 
 		 Add tabs for Chat and Settings
@@ -43,7 +45,7 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-plugin_dependencies=openai
+# plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=
