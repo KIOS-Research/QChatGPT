@@ -176,6 +176,11 @@
               </item>
               <item>
                <property name="text">
+                <string>gpt-3.5-turbo</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>text-curie-001</string>
                </property>
               </item>

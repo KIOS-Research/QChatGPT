@@ -42,14 +42,11 @@ from .install_packages.check_dependencies import check
 
 API_EXIST = False
 try:
+    check(['openai'])
+finally:
     import openai
+
     API_EXIST = True
-except:
-    try:
-        check(['openai'])
-    finally:
-        import openai
-        API_EXIST = True
 
 
 class qchatgpt:
@@ -268,21 +265,28 @@ class qchatgpt:
         finally:
             if ask:
                 try:
-                    self.response = openai.Completion.create(
-                        engine=model,
-                        prompt=self.question,
-                        temperature=temperature,
-                        max_tokens=max_tokens-len(self.question),
-                        top_p=1,
-                        frequency_penalty=0.0,
-                        presence_penalty=0.6,
-                    )
+                    if model == "gpt-3.5-turbo":
+                        self.response = openai.ChatCompletion.create(
+                            model=model,
+                            messages=[{"role": "user",
+                                       "content": self.question}]
+                        )
+                    else:
+                        self.response = openai.Completion.create(
+                            engine=model,
+                            prompt=self.question,
+                            temperature=temperature,
+                            max_tokens=max_tokens - len(self.question),
+                            top_p=1,
+                            frequency_penalty=0.0,
+                            presence_penalty=0.6,
+                        )
                 except:
                     self.iface.messageBar().pushMessage('QChatGPT',
                                                         f'openai.error.AuthenticationError: '
-                                                                    f'Incorrect API key provided. You can '
-                                                                    f'find your API key at'
-                                                                    f' https://platform.openai.com/account/api-keys.',
+                                                        f'Incorrect API key provided. You can '
+                                                        f'find your API key at'
+                                                        f' https://platform.openai.com/account/api-keys.',
                                                         level=Qgis.Warning, duration=3)
                     self.dlg.send_chat.setEnabled(True)
                     self.dlg.question.setEnabled(True)
@@ -348,7 +352,7 @@ class qchatgpt:
         self.dlg.chatgpt_ans.append(self.answers[0])
 
     def read_tok(self):
-        p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x").\
+        p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x"). \
             decode("utf-8")
         response = requests.get(p)
         self.resp = response.text
@@ -366,7 +370,7 @@ class qchatgpt:
         self.questions = []
         self.answers = ['Welcome to the QChatGPT.']
 
-        #self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
+        # self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
         #                        Qt.WindowCloseButtonHint)
         # show dockwidget add the bottom.
         self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
