@@ -37,6 +37,7 @@ import os
 import base64
 import sys
 import requests
+from collections import deque
 
 from .install_packages.check_dependencies import check
 
@@ -64,6 +65,8 @@ class qchatgpt:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+
+        self.history = deque(maxlen=6)
         self.resp = None
         self.last_ans = None
         self.dlg = None
@@ -267,16 +270,18 @@ class qchatgpt:
                 self.dlg.chatgpt_ans.verticalScrollBar().maximum())
         finally:
             if ask:
-                try:
+                try:   
+                    question_history = " ".join(self.history) + " " + self.question
                     self.response = openai.Completion.create(
                         engine=model,
-                        prompt=self.question,
+                        prompt=question_history,
                         temperature=temperature,
-                        max_tokens=max_tokens-len(self.question),
+                        max_tokens=max_tokens-len(question_history),
                         top_p=1,
                         frequency_penalty=0.0,
                         presence_penalty=0.6,
                     )
+                    
                 except:
                     self.iface.messageBar().pushMessage('QChatGPT',
                                                         f'openai.error.AuthenticationError: '
@@ -286,9 +291,12 @@ class qchatgpt:
                                                         level=Qgis.Warning, duration=3)
                     self.dlg.send_chat.setEnabled(True)
                     self.dlg.question.setEnabled(True)
+                    
                     return
 
                 self.last_ans = self.response['choices'][0]['text']
+                conversation_pair = self.question + " " + self.last_ans
+                self.history.append(conversation_pair)                
                 last_ans = "AI: " + self.last_ans
                 self.answers.append(last_ans)
 
@@ -343,7 +351,8 @@ class qchatgpt:
 
     def clear_ans_fun(self):
         self.questions = []
-        self.answers = ['Welcome to the QChatGPT.']
+        self.history = deque(maxlen=5)
+        self.answers = ['Welcome to the QChatGPT development version.']
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.append(self.answers[0])
 
@@ -364,7 +373,7 @@ class qchatgpt:
 
         self.read_tok()
         self.questions = []
-        self.answers = ['Welcome to the QChatGPT.']
+        self.answers = ['Welcome to the QChatGPT development version.']
 
         #self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
         #                        Qt.WindowCloseButtonHint)
