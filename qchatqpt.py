@@ -23,8 +23,8 @@
 """
 import time
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtGui import QIcon, QFont, QKeySequence
+from qgis.PyQt.QtCore import QUrl, QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtGui import QKeySequence, QTextCursor, QTextDocumentFragment, QTextDocument, QIcon, QFont
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QShortcut, QFileDialog
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer, QgsProject
 from qgis.utils import Qgis
@@ -37,19 +37,18 @@ import os
 import base64
 import sys
 import requests
+from collections import deque
+import urllib.request
 
 from .install_packages.check_dependencies import check
 
 API_EXIST = False
 try:
+    check(['openai'])
+finally:
     import openai
+
     API_EXIST = True
-except:
-    try:
-        check(['openai'])
-    finally:
-        import openai
-        API_EXIST = True
 
 
 class qchatgpt:
@@ -64,6 +63,9 @@ class qchatgpt:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+
+        self.questions_index = 0
+        self.history = deque(maxlen=6)
         self.resp = None
         self.last_ans = None
         self.dlg = None
@@ -75,6 +77,7 @@ class qchatgpt:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        self.api_key_path = os.path.join(self.plugin_dir, 'api_key.txt')
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -235,8 +238,11 @@ class qchatgpt:
         self.dlg.question.setEnabled(False)
 
         temperature = self.dlg.temperature.value()
-        if self.dlg.custom_apikey.text() != '':
+        if self.dlg.custom_apikey.text() not in ['', self.resp]:
             openai.api_key = self.dlg.custom_apikey.text()
+            with open(os.path.join(self.plugin_dir, 'api_key.txt'), 'w') as f:
+                f.write(self.dlg.custom_apikey.text())
+            self.resp = self.dlg.custom_apikey.text()
         else:
             openai.api_key = self.resp  # General api
 
@@ -245,6 +251,9 @@ class qchatgpt:
         try:
             ask = True
             self.question = self.dlg.question.text()
+            self.questions.append(self.question)
+            self.questions_index = len(self.questions)
+
             if self.question == "":
                 self.dlg.send_chat.setEnabled(True)
                 self.dlg.question.setEnabled(True)
@@ -267,35 +276,74 @@ class qchatgpt:
                 self.dlg.chatgpt_ans.verticalScrollBar().maximum())
         finally:
             if ask:
-                try:
-                    self.response = openai.Completion.create(
-                        engine=model,
-                        prompt=self.question,
-                        temperature=temperature,
-                        max_tokens=max_tokens-len(self.question),
-                        top_p=1,
-                        frequency_penalty=0.0,
-                        presence_penalty=0.6,
-                    )
-                except:
+                try:   
+                    question_history = " ".join(self.history) + " " + self.question
+                    if self.dlg.image.isChecked():
+                        self.response = openai.Image.create(
+                            prompt=self.question,
+                            n=1,
+                            size=self.dlg.image_size.currentText()
+                        )
+                        url = str(self.response['data'][0]['url'])
+                        self.last_ans = f"<a href='{url}'>{self.question}</a><br>"
+
+                        with urllib.request.urlopen(url) as resp:
+                            image_data = resp.read()
+                            encoded_image = base64.b64encode(image_data).decode('ascii')
+                            data_uri = 'data:image/png;base64,{}'.format(encoded_image)
+
+                        document = QTextDocument()
+                        document.setHtml("<img src='{}'>".format(data_uri))
+                    else:
+                        if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"]:
+                            self.response = openai.ChatCompletion.create(
+                                model=model,
+                                max_tokens=max_tokens - len(self.question),
+                                temperature=temperature,
+                                top_p=1,
+                                frequency_penalty=0.0,
+                                presence_penalty=0.6,
+                                messages=[{"role": "user", "content": self.question}]
+                            )
+                            self.last_ans = self.response['choices'][0]['message']['content']
+                        else:
+                            self.response = openai.Completion.create(
+                                engine=model,
+                                prompt=question_history,
+                                temperature=temperature,
+                                max_tokens=max_tokens - len(question_history),
+                                top_p=1,
+                                frequency_penalty=0.0,
+                                presence_penalty=0.6,
+                            )
+                            self.last_ans = self.response['choices'][0]['text']
+
+                except Exception as e:
                     self.iface.messageBar().pushMessage('QChatGPT',
-                                                        f'openai.error.AuthenticationError: '
-                                                                    f'Incorrect API key provided. You can '
-                                                                    f'find your API key at'
-                                                                    f' https://platform.openai.com/account/api-keys.',
+                                                        f'{e}. \n You can '
+                                                        f'find your API key at'
+                                                        f' https://platform.openai.com/account/api-keys.',
                                                         level=Qgis.Warning, duration=3)
                     self.dlg.send_chat.setEnabled(True)
                     self.dlg.question.setEnabled(True)
                     return
 
-                self.last_ans = self.response['choices'][0]['text']
+                conversation_pair = self.question + " " + self.last_ans
+                self.history.append(conversation_pair)                
                 last_ans = "AI: " + self.last_ans
                 self.answers.append(last_ans)
 
                 # Initial implementation. Doesn't preserve newlines
                 self.dlg.chatgpt_ans.append(last_ans)
+                if self.dlg.image.isChecked():
+                    current_document = self.dlg.chatgpt_ans.document()
+                    cursor = QTextCursor(current_document)
+                    cursor.movePosition(QTextCursor.End)
+                    cursor.insertBlock()
+                    fragment = QTextDocumentFragment(document)
+                    cursor.insertFragment(fragment)
 
-                self.dlg.chatgpt_ans.repaint()
+                # self.dlg.chatgpt_ans.repaint()
                 self.dlg.question.setText('')
                 self.dlg.chatgpt_ans.verticalScrollBar().setValue(
                     self.dlg.chatgpt_ans.verticalScrollBar().maximum())
@@ -343,15 +391,29 @@ class qchatgpt:
 
     def clear_ans_fun(self):
         self.questions = []
+        self.questions_index = 0
+        self.history = deque(maxlen=5)
         self.answers = ['Welcome to the QChatGPT.']
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.append(self.answers[0])
 
     def read_tok(self):
-        p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x").\
-            decode("utf-8")
-        response = requests.get(p)
-        self.resp = response.text
+        # p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x"). \
+        #    decode("utf-8")
+        # response = requests.get(p)
+        # self.resp = response.text
+        if os.path.exists(self.api_key_path):
+            with open(self.api_key_path, 'r') as f:
+                p = f.read()
+            self.dlg.custom_apikey.setText(p)
+
+    def command_history(self, up=False):
+        if up:
+            self.questions_index = max(0, self.questions_index - 1)
+            self.dlg.question.setText(self.questions[self.questions_index])
+        else:
+            self.questions_index = min(len(self.questions) - 1, self.questions_index + 1)
+            self.dlg.question.setText(self.questions[self.questions_index])
 
     def run(self):
         """Run method that performs all the real work"""
@@ -361,12 +423,12 @@ class qchatgpt:
         if self.first_start:
             self.first_start = False
             self.dlg = qchatgptDockWidget()
+            self.read_tok()
 
-        self.read_tok()
         self.questions = []
         self.answers = ['Welcome to the QChatGPT.']
 
-        #self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
+        # self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
         #                        Qt.WindowCloseButtonHint)
         # show dockwidget add the bottom.
         self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
@@ -376,11 +438,18 @@ class qchatgpt:
         self.dlg.addonmap.clicked.connect(self.add_on_map)
         self.dlg.question.returnPressed.connect(self.send_message)
 
+        # enable history questions
+        up_arrow = QShortcut(QKeySequence.MoveToNextLine, self.dlg.question)
+        up_arrow.activated.connect(lambda: self.command_history(False))
+        down_arrow = QShortcut(QKeySequence.MoveToPreviousLine, self.dlg.question)
+        down_arrow.activated.connect(lambda: self.command_history(True))
+
         self.dlg.temperature.setValue(0.9)
         self.dlg.max_tokens.setValue(4000)
 
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.setAcceptRichText(True)
+        self.dlg.chatgpt_ans.setOpenLinks(True)
         self.dlg.chatgpt_ans.setOpenExternalLinks(True)
 
         self.dlg.chatgpt_ans.append(self.answers[0])

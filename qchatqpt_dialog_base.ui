@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>863</width>
-    <height>488</height>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,14 @@
         <item row="0" column="0">
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QTextBrowser" name="chatgpt_ans"/>
+           <widget class="QTextBrowser" name="chatgpt_ans">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -57,6 +64,13 @@
                </size>
               </property>
              </spacer>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="image">
+              <property name="text">
+               <string>Image</string>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="addonmap">
@@ -151,9 +165,28 @@
                <string>The model which will generate the completion.</string>
               </property>
               <property name="text">
-               <string>Model:              </string>
+               <string>&lt;a href=&quot;https://platform.openai.com/docs/models/overview&quot;&gt;Models &lt;/a&gt;:</string>
+              </property>
+              <property name="openExternalLinks">
+               <bool>false</bool>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Minimum</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
              <widget class="QComboBox" name="model">
@@ -172,6 +205,16 @@
               <item>
                <property name="text">
                 <string>text-davinci-003</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>gpt-3.5-turbo</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>gpt-3.5-turbo-0301</string>
                </property>
               </item>
               <item>
@@ -224,7 +267,7 @@
                <string>Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.</string>
               </property>
               <property name="text">
-               <string>Temperature:    </string>
+               <string>Temperature:     </string>
               </property>
              </widget>
             </item>
@@ -264,7 +307,7 @@
                <string>One token is roughly 4 characters for normal English text</string>
               </property>
               <property name="text">
-               <string>Maximum length</string>
+               <string>Maximum length:</string>
               </property>
              </widget>
             </item>
@@ -293,6 +336,54 @@
                </size>
               </property>
              </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Image size:        </string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="image_size">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::WheelFocus</enum>
+              </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QComboBox::AdjustToContents</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string>256x256</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>512x512</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>1024x1024</string>
+               </property>
+              </item>
+             </widget>
             </item>
            </layout>
           </item>

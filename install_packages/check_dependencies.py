@@ -13,7 +13,14 @@ def check(required_packages):
         except ImportError:
             missing_packages.append(package)
 
-    # If any required packages are missing, prompt user to install them
+    try:
+        import openai
+        update_version = False
+        if openai.version.VERSION == '0.27.0':
+            update_version = True
+    except:
+        update_version = False
+
     if missing_packages:
         message = "The following Python packages are required to use the plugin QChatGPT:\n\n"
         message += "\n".join(missing_packages)
@@ -38,3 +45,27 @@ def check(required_packages):
                         subprocess.check_call(['python3', '-m', 'pip', 'install', package])
                     except:
                         importlib.import_module(package)
+
+    # Upgrade openai
+    if not update_version and not missing_packages:
+        message = "The package openai needs an update for the plugin QChatGPT:\n\n"
+        message += "\n".join(missing_packages)
+        message += "\n\nWould you like to update now?"
+
+        reply = QMessageBox.question(None, 'Missing Dependencies', message,
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.No:
+            return
+
+        update = False
+        try:
+            os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip') + f'" install --upgrade openai')
+            update = True
+        finally:
+            if not update:
+                try:
+                    import subprocess
+                    subprocess.check_call(['python3', '-m', 'pip', 'install', f'" --upgrade openai'])
+                except:
+                    pass
