@@ -408,12 +408,13 @@ class qchatgpt:
             self.dlg.custom_apikey.setText(p)
 
     def command_history(self, up=False):
-        if up:
-            self.questions_index = max(0, self.questions_index - 1)
-            self.dlg.question.setText(self.questions[self.questions_index])
-        else:
-            self.questions_index = min(len(self.questions) - 1, self.questions_index + 1)
-            self.dlg.question.setText(self.questions[self.questions_index])
+        if self.questions:
+            if up:
+                self.questions_index = max(0, self.questions_index - 1)
+                self.dlg.question.setText(self.questions[self.questions_index])
+            else:
+                self.questions_index = min(len(self.questions) - 1, self.questions_index + 1)
+                self.dlg.question.setText(self.questions[self.questions_index])
 
     def run(self):
         """Run method that performs all the real work"""
