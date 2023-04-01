@@ -390,8 +390,6 @@ class qchatgpt:
                                                 level=Qgis.Warning, duration=3)
 
     def clear_ans_fun(self):
-        self.questions = []
-        self.questions_index = 0
         self.history = deque(maxlen=5)
         self.answers = ['Welcome to the QChatGPT.']
         self.dlg.chatgpt_ans.clear()

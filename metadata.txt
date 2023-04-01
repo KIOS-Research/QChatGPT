@@ -6,7 +6,7 @@
 name=QChatGPT
 qgisMinimumVersion=3.0
 description=A plugin integration between QGIS and openai API.
-version=0.3
+version=0.4
 author=Marios S. Kyriakou, KIOS Research and Innovation Center of Excellence (KIOS CoE)
 email=mariosmsk@gmail.com
 
