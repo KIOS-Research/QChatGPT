@@ -23,8 +23,8 @@
 """
 import time
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtGui import QIcon, QFont, QKeySequence
+from qgis.PyQt.QtCore import QUrl, QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtGui import QKeySequence, QTextCursor, QTextDocumentFragment, QTextDocument, QIcon, QFont
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QShortcut, QFileDialog
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer, QgsProject
 from qgis.utils import Qgis
@@ -38,6 +38,7 @@ import base64
 import sys
 import requests
 from collections import deque
+import urllib.request
 
 from .install_packages.check_dependencies import check
 
@@ -63,6 +64,7 @@ class qchatgpt:
         """
         # Save reference to the QGIS interface
 
+        self.questions_index = 0
         self.history = deque(maxlen=6)
         self.resp = None
         self.last_ans = None
@@ -249,6 +251,9 @@ class qchatgpt:
         try:
             ask = True
             self.question = self.dlg.question.text()
+            self.questions.append(self.question)
+            self.questions_index = len(self.questions)
+
             if self.question == "":
                 self.dlg.send_chat.setEnabled(True)
                 self.dlg.question.setEnabled(True)
@@ -386,6 +391,7 @@ class qchatgpt:
 
     def clear_ans_fun(self):
         self.questions = []
+        self.questions_index = 0
         self.history = deque(maxlen=5)
         self.answers = ['Welcome to the QChatGPT.']
         self.dlg.chatgpt_ans.clear()
@@ -400,6 +406,14 @@ class qchatgpt:
             with open(self.api_key_path, 'r') as f:
                 p = f.read()
             self.dlg.custom_apikey.setText(p)
+
+    def command_history(self, up=False):
+        if up:
+            self.questions_index = max(0, self.questions_index - 1)
+            self.dlg.question.setText(self.questions[self.questions_index])
+        else:
+            self.questions_index = min(len(self.questions) - 1, self.questions_index + 1)
+            self.dlg.question.setText(self.questions[self.questions_index])
 
     def run(self):
         """Run method that performs all the real work"""
@@ -423,6 +437,12 @@ class qchatgpt:
         self.dlg.export_ans.clicked.connect(self.export_messages)
         self.dlg.addonmap.clicked.connect(self.add_on_map)
         self.dlg.question.returnPressed.connect(self.send_message)
+
+        # enable history questions
+        up_arrow = QShortcut(QKeySequence.MoveToNextLine, self.dlg.question)
+        up_arrow.activated.connect(lambda: self.command_history(False))
+        down_arrow = QShortcut(QKeySequence.MoveToPreviousLine, self.dlg.question)
+        down_arrow.activated.connect(lambda: self.command_history(True))
 
         self.dlg.temperature.setValue(0.9)
         self.dlg.max_tokens.setValue(4000)
