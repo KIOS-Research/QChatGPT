@@ -273,37 +273,32 @@ class qchatgpt:
             if ask:
                 try:   
                     question_history = " ".join(self.history) + " " + self.question
-                    self.response = openai.Completion.create(
-                        engine=model,
-                        prompt=question_history,
-                        temperature=temperature,
-                        max_tokens=max_tokens-len(question_history),
-                        top_p=1,
-                        frequency_penalty=0.0,
-                        presence_penalty=0.6,
-                    )
-                    
-                try:
-                    if model == "gpt-3.5-turbo":
+                    if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"]:
                         self.response = openai.ChatCompletion.create(
                             model=model,
-                            messages=[{"role": "user",
-                                       "content": self.question}]
+                            max_tokens=max_tokens - len(self.question),
+                            temperature=temperature,
+                            top_p=1,
+                            frequency_penalty=0.0,
+                            presence_penalty=0.6,
+                            messages=[{"role": "user", "content": self.question}]
                         )
+                        self.last_ans = self.response['choices'][0]['message']['content']
                     else:
                         self.response = openai.Completion.create(
                             engine=model,
-                            prompt=self.question,
+                            prompt=question_history,
                             temperature=temperature,
-                            max_tokens=max_tokens - len(self.question),
+                            max_tokens=max_tokens - len(question_history),
                             top_p=1,
                             frequency_penalty=0.0,
                             presence_penalty=0.6,
                         )
-                except:
+                        self.last_ans = self.response['choices'][0]['text']
+
+                except Exception as e:
                     self.iface.messageBar().pushMessage('QChatGPT',
-                                                        f'openai.error.AuthenticationError: '
-                                                        f'Incorrect API key provided. You can '
+                                                        f'{e}. \n You can '
                                                         f'find your API key at'
                                                         f' https://platform.openai.com/account/api-keys.',
                                                         level=Qgis.Warning, duration=3)
@@ -312,7 +307,6 @@ class qchatgpt:
                     
                     return
 
-                self.last_ans = self.response['choices'][0]['text']
                 conversation_pair = self.question + " " + self.last_ans
                 self.history.append(conversation_pair)                
                 last_ans = "AI: " + self.last_ans

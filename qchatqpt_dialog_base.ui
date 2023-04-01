@@ -151,9 +151,28 @@
                <string>The model which will generate the completion.</string>
               </property>
               <property name="text">
-               <string>Model:              </string>
+               <string>&lt;a href=&quot;https://platform.openai.com/docs/models/overview&quot;&gt;Models&lt;/a&gt;:</string>
+              </property>
+              <property name="openExternalLinks">
+               <bool>false</bool>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Minimum</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
              <widget class="QComboBox" name="model">
@@ -177,6 +196,11 @@
               <item>
                <property name="text">
                 <string>gpt-3.5-turbo</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>gpt-3.5-turbo-0301</string>
                </property>
               </item>
               <item>

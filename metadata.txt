@@ -20,7 +20,12 @@ repository=https://github.com/Mariosmsk/QChatGPT
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-02-20  QChatGPT 0.3:
+changelog=2023-04-01  QChatGPT 0.4:
+		 Add the models gpt-3.5-turbo, gpt-3.5-turbo-0301 (you need to be using openai v0.27.0)
+		 Add installation notes for macOS (Thanks @gilles-morain)
+		 Adds context for last 6 interactions (Thanks @Ojaybee)
+
+	  2023-02-20  QChatGPT 0.3:
 		 Remove plugin dependencies, confused with python dependencies (Thanks @Gustry).
 	  2023-02-14  QChatGPT 0.2:
 		 Install dependencies from code (test with ubuntu & windows).
