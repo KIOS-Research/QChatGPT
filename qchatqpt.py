@@ -75,6 +75,7 @@ class qchatgpt:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        self.api_key_path = os.path.join(self.plugin_dir, 'api_key.txt')
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -235,8 +236,11 @@ class qchatgpt:
         self.dlg.question.setEnabled(False)
 
         temperature = self.dlg.temperature.value()
-        if self.dlg.custom_apikey.text() != '':
+        if self.dlg.custom_apikey.text() not in ['', self.resp]:
             openai.api_key = self.dlg.custom_apikey.text()
+            with open(os.path.join(self.plugin_dir, 'api_key.txt'), 'w') as f:
+                f.write(self.dlg.custom_apikey.text())
+            self.resp = self.dlg.custom_apikey.text()
         else:
             openai.api_key = self.resp  # General api
 
@@ -366,15 +370,19 @@ class qchatgpt:
     def clear_ans_fun(self):
         self.questions = []
         self.history = deque(maxlen=5)
-        self.answers = ['Welcome to the QChatGPT development version.']
+        self.answers = ['Welcome to the QChatGPT.']
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.append(self.answers[0])
 
     def read_tok(self):
-        p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x"). \
-            decode("utf-8")
-        response = requests.get(p)
-        self.resp = response.text
+        # p = base64.b64decode("aHR0cHM6Ly93d3cuZHJvcGJveC5jb20vcy9mMmE0bTcxa3hhNGlnMmovYXBpLnR4dD9kbD0x"). \
+        #    decode("utf-8")
+        # response = requests.get(p)
+        # self.resp = response.text
+        if os.path.exists(self.api_key_path):
+            with open(self.api_key_path, 'r') as f:
+                p = f.read()
+            self.dlg.custom_apikey.setText(p)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -384,8 +392,8 @@ class qchatgpt:
         if self.first_start:
             self.first_start = False
             self.dlg = qchatgptDockWidget()
+            self.read_tok()
 
-        self.read_tok()
         self.questions = []
         self.answers = ['Welcome to the QChatGPT development version.']
 
