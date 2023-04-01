@@ -273,28 +273,45 @@ class qchatgpt:
             if ask:
                 try:   
                     question_history = " ".join(self.history) + " " + self.question
-                    if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"]:
-                        self.response = openai.ChatCompletion.create(
-                            model=model,
-                            max_tokens=max_tokens - len(self.question),
-                            temperature=temperature,
-                            top_p=1,
-                            frequency_penalty=0.0,
-                            presence_penalty=0.6,
-                            messages=[{"role": "user", "content": self.question}]
+                    if self.dlg.image.isChecked():
+                        self.response = openai.Image.create(
+                            prompt=self.question,
+                            n=1,
+                            size=self.dlg.image_size.currentText()
                         )
-                        self.last_ans = self.response['choices'][0]['message']['content']
+                        url = str(self.response['data'][0]['url'])
+                        self.last_ans = f"<a href='{url}'>{self.question}</a><br>"
+
+                        with urllib.request.urlopen(url) as resp:
+                            image_data = resp.read()
+                            encoded_image = base64.b64encode(image_data).decode('ascii')
+                            data_uri = 'data:image/png;base64,{}'.format(encoded_image)
+
+                        document = QTextDocument()
+                        document.setHtml("<img src='{}'>".format(data_uri))
                     else:
-                        self.response = openai.Completion.create(
-                            engine=model,
-                            prompt=question_history,
-                            temperature=temperature,
-                            max_tokens=max_tokens - len(question_history),
-                            top_p=1,
-                            frequency_penalty=0.0,
-                            presence_penalty=0.6,
-                        )
-                        self.last_ans = self.response['choices'][0]['text']
+                        if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"]:
+                            self.response = openai.ChatCompletion.create(
+                                model=model,
+                                max_tokens=max_tokens - len(self.question),
+                                temperature=temperature,
+                                top_p=1,
+                                frequency_penalty=0.0,
+                                presence_penalty=0.6,
+                                messages=[{"role": "user", "content": self.question}]
+                            )
+                            self.last_ans = self.response['choices'][0]['message']['content']
+                        else:
+                            self.response = openai.Completion.create(
+                                engine=model,
+                                prompt=question_history,
+                                temperature=temperature,
+                                max_tokens=max_tokens - len(question_history),
+                                top_p=1,
+                                frequency_penalty=0.0,
+                                presence_penalty=0.6,
+                            )
+                            self.last_ans = self.response['choices'][0]['text']
 
                 except Exception as e:
                     self.iface.messageBar().pushMessage('QChatGPT',
@@ -304,7 +321,6 @@ class qchatgpt:
                                                         level=Qgis.Warning, duration=3)
                     self.dlg.send_chat.setEnabled(True)
                     self.dlg.question.setEnabled(True)
-                    
                     return
 
                 conversation_pair = self.question + " " + self.last_ans
@@ -314,8 +330,15 @@ class qchatgpt:
 
                 # Initial implementation. Doesn't preserve newlines
                 self.dlg.chatgpt_ans.append(last_ans)
+                if self.dlg.image.isChecked():
+                    current_document = self.dlg.chatgpt_ans.document()
+                    cursor = QTextCursor(current_document)
+                    cursor.movePosition(QTextCursor.End)
+                    cursor.insertBlock()
+                    fragment = QTextDocumentFragment(document)
+                    cursor.insertFragment(fragment)
 
-                self.dlg.chatgpt_ans.repaint()
+                # self.dlg.chatgpt_ans.repaint()
                 self.dlg.question.setText('')
                 self.dlg.chatgpt_ans.verticalScrollBar().setValue(
                     self.dlg.chatgpt_ans.verticalScrollBar().maximum())
@@ -389,7 +412,7 @@ class qchatgpt:
             self.read_tok()
 
         self.questions = []
-        self.answers = ['Welcome to the QChatGPT development version.']
+        self.answers = ['Welcome to the QChatGPT.']
 
         # self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
         #                        Qt.WindowCloseButtonHint)
@@ -406,6 +429,7 @@ class qchatgpt:
 
         self.dlg.chatgpt_ans.clear()
         self.dlg.chatgpt_ans.setAcceptRichText(True)
+        self.dlg.chatgpt_ans.setOpenLinks(True)
         self.dlg.chatgpt_ans.setOpenExternalLinks(True)
 
         self.dlg.chatgpt_ans.append(self.answers[0])

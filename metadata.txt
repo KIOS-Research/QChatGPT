@@ -25,6 +25,7 @@ changelog=2023-04-01  QChatGPT 0.4:
 		 Add installation notes for macOS (Thanks @gilles-morain)
 		 Adds context for last 6 interactions (Thanks @Ojaybee)
 
+		 Add Image option to show image in chat.
 	  2023-02-20  QChatGPT 0.3:
 		 Remove plugin dependencies, confused with python dependencies (Thanks @Gustry).
 	  2023-02-14  QChatGPT 0.2:
