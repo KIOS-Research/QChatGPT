@@ -20,7 +20,17 @@ repository=https://github.com/Mariosmsk/QChatGPT
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-04-01  QChatGPT 0.4:
+changelog=2023-05-06  QChatGPT 0.5:
+		 Implement AI voice response feature.
+		 Add microphone button for input with a specified duration.
+		 Add option to stop voice response.
+		 Save the previous AI response for future reference.
+		 Enable execution of Python code and integration with the Python console.
+		 Support data input via links instead only of geoJSON files.
+		 Provide options for completing questions using QGIS and QCode.
+		 Allow users to edit the AI's response, for example, editing geoJSON files before adding them to the map.
+		 Incorporate Whisper models for speech-to-text transcription.
+	  2023-04-01  QChatGPT 0.4:
 		 Add the models gpt-3.5-turbo, gpt-3.5-turbo-0301 (you need to be using openai v0.27.0)
 		 Add installation notes for macOS (Thanks @gilles-morain)
 		 Adds context for last 6 interactions (Thanks @Ojaybee)

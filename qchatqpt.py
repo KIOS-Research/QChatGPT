@@ -24,10 +24,12 @@
 import time
 
 from qgis.PyQt.QtCore import QUrl, QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtGui import QKeySequence, QTextCursor, QTextDocumentFragment, QTextDocument, QIcon, QFont
-from qgis.PyQt.QtWidgets import QAction, QMessageBox, QShortcut, QFileDialog
+from qgis.PyQt.QtGui import QPalette, QKeySequence, QTextCursor, QTextDocumentFragment, QTextDocument, QIcon, QFont
+from qgis.PyQt.QtWidgets import QAction, QMessageBox, QShortcut, QFileDialog, QSizePolicy, QWidget
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer, QgsProject
+from qgis.gui import QgsSublayersDialog
 from qgis.utils import Qgis
+from qgis.PyQt.Qsci import QsciScintilla
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -39,16 +41,64 @@ import sys
 import requests
 from collections import deque
 import urllib.request
+import re
 
 from .install_packages.check_dependencies import check
 
 API_EXIST = False
 try:
-    check(['openai'])
+    check(['openai', 'SpeechRecognition', 'pyaudio', 'sounddevice', 'pyttsx3'])
 finally:
     import openai
 
+    try:
+        import speech_recognition as sr
+    except:
+        pass
+    try:
+        import pyttsx3
+    except:
+        pass
+
     API_EXIST = True
+
+try:
+    import threading
+except:
+    pass
+
+
+def add_url_on_map(download_url, plugin_dir):
+    filename = os.path.basename(download_url)
+    status_code = -1
+    find_type = False
+    for extension in ['geojson', 'json', 'shp', 'gpkg',
+                      'kml', 'kmz', 'csv', 'cpg', 'dbf',
+                      'prj', 'shx', 'json']:
+        if extension in download_url:
+            find_type = True
+            break
+
+    if find_type:
+        file_response = requests.get(download_url)
+        content_disp = file_response.headers.get("Content-Disposition")
+        if content_disp:
+            filename = re.findall("filename=(\S+)", content_disp)[0]
+
+        status_code = file_response.status_code
+
+        if any(extension in filename for extension in ['geojson', 'json', 'shp', 'gpkg',
+                                                       'kml', 'kmz', 'csv', 'cpg', 'dbf',
+                                                       'prj', 'shx', 'json']):
+            filepath = os.path.join(plugin_dir, 'temp', filename)
+            # Check if the file request was successful
+            if status_code == 200:
+                with open(filepath, "wb") as file:
+                    file.write(file_response.content)
+                layer = QgsVectorLayer(filepath, f'{filename}', 'ogr')
+                if layer.isValid():
+                    QgsProject.instance().addMapLayer(layer)
+    return status_code
 
 
 class qchatgpt:
@@ -64,6 +114,16 @@ class qchatgpt:
         """
         # Save reference to the QGIS interface
 
+        self.engine2 = None
+        self.task_read2 = None
+        self.engine = None
+        self.task_read = None
+        self.task_add = None
+        self.task = None
+        self.text = ''
+        self.background__default_color = None
+        self.python_widget = None
+        self.python_ui = None
         self.questions_index = 0
         self.history = deque(maxlen=6)
         self.resp = None
@@ -229,13 +289,15 @@ class qchatgpt:
 
     def send_message(self):
         if not API_EXIST:
-            self.showMessage("QChatGPT", f"Please install the python package `pip`.", "OK",
-                             "Warning")
+            self.showMessage("QChatGPT", f"Please install the python package `pip`.", "OK", "Warning")
             self.dlg.send_chat.setEnabled(True)
             self.dlg.question.setEnabled(True)
             return
         self.dlg.send_chat.setEnabled(False)
         self.dlg.question.setEnabled(False)
+
+        self.dlg.chatgpt_edit_btn.setChecked(False)
+        self.chat_edit_lastai()
 
         temperature = self.dlg.temperature.value()
         if self.dlg.custom_apikey.text() not in ['', self.resp]:
@@ -276,7 +338,7 @@ class qchatgpt:
                 self.dlg.chatgpt_ans.verticalScrollBar().maximum())
         finally:
             if ask:
-                try:   
+                try:
                     question_history = " ".join(self.history) + " " + self.question
                     if self.dlg.image.isChecked():
                         self.response = openai.Image.create(
@@ -307,11 +369,19 @@ class qchatgpt:
                             )
                             self.last_ans = self.response['choices'][0]['message']['content']
                         else:
+                            if self.dlg.qgiscode.isChecked():
+                                qq = " ".join(self.history) + " " + self.question + ', give code of qgis 3 pyqt ' \
+                                                                                    'or processing algorithm'
+                            elif self.dlg.qgisui.isChecked():
+                                qq = " ".join(self.history) + " " + self.question + ' using QGIS'
+                            else:
+
+                                qq = question_history
                             self.response = openai.Completion.create(
                                 engine=model,
-                                prompt=question_history,
+                                prompt=qq,
                                 temperature=temperature,
-                                max_tokens=max_tokens - len(question_history),
+                                max_tokens=max_tokens - len(qq),
                                 top_p=1,
                                 frequency_penalty=0.0,
                                 presence_penalty=0.6,
@@ -329,7 +399,7 @@ class qchatgpt:
                     return
 
                 conversation_pair = self.question + " " + self.last_ans
-                self.history.append(conversation_pair)                
+                self.history.append(conversation_pair)
                 last_ans = "AI: " + self.last_ans
                 self.answers.append(last_ans)
 
@@ -350,16 +420,17 @@ class qchatgpt:
                 self.dlg.send_chat.setEnabled(True)
                 self.dlg.question.setEnabled(True)
 
-    def export_messages(self):
-        FILENAME = QFileDialog.getSaveFileName(None, 'Export ChatGPT answers', os.path.join(
+                self.dlg.chatgpt_edit.setText(self.last_ans)
+
+    def export_messages(self, text='Export ChatGPT answers', ans=None):
+        FILENAME = QFileDialog.getSaveFileName(None, text, os.path.join(
             os.path.join(os.path.expanduser('~')), 'Desktop'), 'text (*.txt *.TXT)')
         FILENAME = FILENAME[0]
         if not os.path.isabs(FILENAME):
             return
         try:
             with open(FILENAME, "w") as f:
-                f.writelines(self.answers)
-
+                f.writelines(ans)
         except IOError:
             self.iface.messageBar().pushMessage('QChatGPT', f'Please, first close the file: "{FILENAME}"!',
                                                 level=Qgis.Warning, duration=3)
@@ -373,21 +444,128 @@ class qchatgpt:
             return False
         return True
 
-    def add_on_map(self):
-        # check if is valid json
-        try:
-            status = self.validate_json()
-        except:
-            return
-        if status:
+    def add_completed(self, task):
+        pass
 
-            layer = QgsVectorLayer(self.last_ans, "tmp_geojson", "ogr")
-            QgsProject.instance().addMapLayer(layer)
+    def add_on_map_task(self):
+        self.task_add = QgsTask.fromFunction(f'QChatGPT Add files..', self.add_on_map, on_finished=self.add_completed)
+        QgsApplication.taskManager().addTask(self.task_add)
+
+    def add_on_map(self, task):
+        # Use regular expression to find the link
+        check_last_ans = self.dlg.chatgpt_edit.toPlainText()
+        try:
+            pattern = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+')
+            matches = re.findall(pattern, check_last_ans)
+        except:
+            matches = False
+
+        if not matches:
+            try:
+                exec("import qgis")
+                exec("from qgis.PyQt.QtCore import *")
+                exec("from qgis.PyQt.QtGui import *")
+                exec("from qgis.PyQt.QtWidgets import *")
+                exec("from qgis.core import *")
+                exec("from qgis.gui import *")
+                exec("from qgis.utils import *")
+                exec(check_last_ans)
+            except Exception as e:
+                pass
+
+            # check if is valid json
+            try:
+                status = self.validate_json()
+            except:
+                return
+
+            if status:
+                layer = QgsVectorLayer(check_last_ans, "tmp_geojson", "ogr")
+                QgsProject.instance().addMapLayer(layer)
+            else:
+                self.iface.messageBar().pushMessage('QChatGPT',
+                                                    f"The layer is unavailable, we can't add it to the map. "
+                                                    f"Please try to get the geoJSON format.",
+                                                    level=Qgis.Warning, duration=3)
+
         else:
-            self.iface.messageBar().pushMessage('QChatGPT',
-                                                f"The layer is unavailable, we can't add it to the map. "
-                                                f"Please try to get the geoJSON format.",
-                                                level=Qgis.Warning, duration=3)
+            url = matches[0]
+            url = url.rstrip(",.;!?)]*")
+            link = url.replace("https://", "")
+            parts = link.split("/")
+            if 'https://github.com/' in url and len(parts) > 3:
+                url = url.replace("https://github.com/", "https://raw.githubusercontent.com/")
+                download_url = url.replace("blob", "")
+                status_code = add_url_on_map(download_url, self.plugin_dir)
+                if status_code != 200:
+                    self.iface.messageBar().pushMessage('QChatGPT',
+                                                        f"Failed to download file. Status code: {status_code}",
+                                                        level=Qgis.Warning, duration=3)
+            elif 'github' in url:
+                owner = parts[1]
+                repo = parts[2]
+                api_url = f'https://api.github.com/repos/{owner}/{repo}/contents'
+                response = requests.get(api_url)
+                if response.status_code == 200:
+                    data = response.json()
+                    for item in data:
+                        if item['type'] == 'file':
+                            download_url = item['download_url']
+                            status_code = add_url_on_map(download_url, self.plugin_dir)
+                    if status_code != 200:
+                        self.iface.messageBar().pushMessage('QChatGPT',
+                                                            f"Failed to download file. Status code: {status_code}",
+                                                            level=Qgis.Warning, duration=3)
+
+            # elif item['type'] == 'dir':
+            #     # Load files from the directory
+            #     dir_url = item['url']
+            #     dir_response = requests.get(dir_url)
+            #     if dir_response.status_code == 200:
+            #         dir_data = dir_response.json()
+            #         for file_item in dir_data:
+            #             download_url = file_item['download_url']
+            #             filename = os.path.basename(download_url)
+            #             filepath = os.path.join(self.plugin_dir, 'temp', filename)
+            #             if any(extension in download_url for extension in
+            #                    ['.geojson', '.json', '.shp', '.gpkg',
+            #                     '.kml', '.kmz', '.csv', '.cpg', '.dbf', '.prj', '.shx']):
+            #                 file_response = requests.get(download_url)
+            #                 # Check if the file request was successful
+            #                 if file_response.status_code == 200:
+            #                     with open(filepath, "wb") as file:
+            #                         file.write(file_response.content)
+            #                     layer = QgsVectorLayer(filepath, f'{filename}', 'ogr')
+            #                     if layer.isValid():
+            #                         QgsProject.instance().addMapLayer(layer)
+            #                     else:
+            #                         error = True
+
+            elif 'geofabrik' in url:
+                response = requests.get(url)
+                filename = os.path.basename(url)
+                filepath = os.path.join(self.plugin_dir, 'temp', filename)
+                if response.status_code == 200:
+                    try:
+                        with open(filepath, "wb") as file:
+                            file.write(response.content)
+                    finally:
+                        layer_names = ['points', 'lines', 'multilinestrings', 'multipolygons']
+                        for layer_name in layer_names:
+                            uri = f'{filepath}|layername={layer_name}'
+                            layer = QgsVectorLayer(uri, f'{layer_name}_{filename}', 'ogr')
+                            if layer.isValid():
+                                QgsProject.instance().addMapLayer(layer)
+                else:
+                    self.iface.messageBar().pushMessage('QChatGPT',
+                                                        f"Failed to download file. Status code: {response.status_code}",
+                                                        level=Qgis.Warning, duration=3)
+            else:
+                status_code = add_url_on_map(url, self.plugin_dir)
+                if status_code != 200:
+                    self.iface.messageBar().pushMessage('QChatGPT',
+                                                        f"Failed to download file. Status code: {status_code}",
+                                                        level=Qgis.Warning, duration=3)
 
     def clear_ans_fun(self):
         self.history = deque(maxlen=5)
@@ -414,6 +592,168 @@ class qchatgpt:
                 self.questions_index = min(len(self.questions) - 1, self.questions_index + 1)
                 self.dlg.question.setText(self.questions[self.questions_index])
 
+    def chat_edit_lastai(self):
+        self.dlg.chatgpt_python_console.setChecked(False)
+        if self.dlg.chatgpt_edit_btn.isChecked():
+            self.dlg.chatgpt_edit.setVisible(True)
+            self.dlg.chatgpt_edit.setFocus(True)
+            self.dlg.chatgpt_ans.setVisible(False)
+            try:
+                self.python_widget.setVisible(False)
+            except:
+                pass
+        else:
+            self.dlg.chatgpt_edit.setVisible(False)
+            self.dlg.chatgpt_ans.setVisible(True)
+
+    def chat_python_console(self):
+        self.python_widget = self.iface.mainWindow().findChild(QWidget, 'PythonConsole')
+        if self.python_widget is not None:
+            self.python_ui = self.python_widget.findChild(QsciScintilla)
+        else:
+            self.iface.actionShowPythonDialog().trigger()
+            self.python_widget = self.iface.mainWindow().findChild(QWidget, 'PythonConsole')
+            self.python_ui = self.python_widget.findChild(QsciScintilla)
+            if self.python_widget is not None:
+                return
+
+        self.dlg.chatgpt_edit_btn.setChecked(False)
+        if self.dlg.chatgpt_python_console.isChecked():
+            self.python_widget.setVisible(True)
+            self.dlg.chatgpt_edit.setVisible(False)
+            self.dlg.chatgpt_ans.setVisible(True)
+            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.python_widget)
+
+            try:
+                child_widgets = self.python_widget.findChildren(QWidget)
+                for child_widget in child_widgets:
+                    if child_widget.toolTip() == 'Show Editor':
+                        break
+            finally:
+                if not child_widget.isChecked():
+                    child_widget.click()
+        else:
+            self.python_widget.setVisible(False)
+            self.dlg.chatgpt_edit.setVisible(False)
+            self.dlg.chatgpt_ans.setVisible(True)
+            self.python_ui.setText(self.dlg.chatgpt_edit.toPlainText())
+
+    def microphone_completed(self, task):
+        self.dlg.microphone.setChecked(False)
+        self.dlg.question.setText(self.text)
+        self.dlg.question.setFocus(True)
+        if self.dlg.microphone_send.isChecked():
+            self.send_message()
+
+            if self.dlg.use_voice.isChecked():
+                self.voice_repsonse()
+            self.task.destroyed()
+
+    def voice_completed(self, task):
+        try:
+            self.engine.stop()
+            self.engine.endLoop()
+        except:
+            pass
+        try:
+            self.task_read.stop()
+        except:
+            pass
+
+    def voice_repsonse(self):
+        self.task_response = QgsTask.fromFunction(f'QChatGPT Voice response.', self.read_ans,
+                                                  on_finished=self.voice_completed, wait_time=300)
+        QgsApplication.taskManager().addTask(self.task_response)
+
+    def voice_stop(self):
+        try:
+            self.engine.stop()
+            self.engine.endLoop()
+        except:
+            pass
+
+    def start_speaking(self, text):
+        try:
+            self.voice_stop()
+        finally:
+            if not self.engine._inLoop:
+                self.engine.say(text)
+                self.engine.runAndWait()
+                self.engine.stop()
+
+    def stopped(self, task):
+        try:
+            self.voice_stop()
+        except:
+            pass
+        try:
+            self.task_response.cancel()
+        except:
+            pass
+        try:
+            self.task_response.destroyed()
+        except:
+            pass
+        QgsMessageLog.logMessage('Task "Voice response" was canceled', 'QChatGPT', Qgis.Info)
+
+    def read_ans(self, task, wait_time):
+
+        wait_time = wait_time / 100
+        text = self.dlg.chatgpt_edit.toPlainText()
+        words = re.split(r'[.,;!]+', text)
+        for i, text_new in enumerate(words):
+            self.engine = pyttsx3.init()
+            voices = self.engine.getProperty('voices')
+            self.engine.setProperty('voice', voices[0].id)
+            self.engine.setProperty('rate', 150)
+            # self.engine.setProperty('language', 'en')  # set the language to English
+            task_read = threading.Thread(target=self.start_speaking, args=(text_new,))
+            task_read.start()
+            time.sleep(wait_time)
+            if self.task_response.isCanceled():
+                self.stopped(self.task_response)
+                self.task_response.destroyed()
+                return None
+
+    def microphone_task(self):
+        if self.dlg.microphone.isChecked():
+            self.dlg.question.setText('Loading...')
+            self.task = QgsTask.fromFunction(f'QChatGPT Microphone.', self.microphone_send,
+                                             on_finished=self.microphone_completed)
+            QgsApplication.taskManager().addTask(self.task)
+
+    def microphone_send(self, task):
+        try:
+            # Create a recognizer object
+            r = sr.Recognizer()
+
+            # Use the default microphone as the audio source
+            with sr.Microphone() as source:
+                # Adjust for ambient noise
+                r.adjust_for_ambient_noise(source)
+                duration = self.dlg.audio_duration.value()
+                self.dlg.question.setText(f"Speak something for {str(duration)} seconds...")
+                audio_sec = r.record(source, duration=duration)
+                with open(os.path.join(self.plugin_dir, 'temp', "audio.wav"), "wb") as f:
+                    f.write(audio_sec.get_wav_data())
+                self.dlg.question.setText(f"Generate text...")
+            try:
+                # Recognize speech using Google Speech Recognition
+                self.text = r.recognize_google(audio_sec)
+            except sr.UnknownValueError:
+                self.text = "Could not understand audio"
+            except sr.RequestError as e:
+                self.text = "Could not understand audio"
+        except Exception as e:
+            self.text = str(e)
+            return {'exception': e}
+
+        if self.dlg.whisper.isChecked():
+            openai.api_key = self.dlg.custom_apikey.text()
+            with open(os.path.join(self.plugin_dir, 'temp', "audio.wav"), "rb") as audio_file:
+                transcript = openai.Audio.transcribe("whisper-1", audio_file)
+            self.text = transcript['text']
+
     def run(self):
         """Run method that performs all the real work"""
 
@@ -433,8 +773,17 @@ class qchatgpt:
         self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
         self.dlg.question.setFocus(True)
         self.dlg.send_chat.clicked.connect(self.send_message)
-        self.dlg.export_ans.clicked.connect(self.export_messages)
-        self.dlg.addonmap.clicked.connect(self.add_on_map)
+        self.dlg.microphone.clicked.connect(self.microphone_task)
+        self.dlg.voiceresponse.clicked.connect(self.voice_repsonse)
+        self.dlg.voicestop.clicked.connect(self.stopped)
+        palette = self.dlg.microphone.palette()
+        background_color = palette.color(QPalette.Button)
+        self.background__default_color = background_color.getRgb()
+
+        self.dlg.export_ans.clicked.connect(lambda: self.export_messages(ans=self.answers))
+        self.dlg.save_last_ans.clicked.connect(lambda: self.export_messages(text='Save AI',
+                                                                            ans=self.dlg.chatgpt_edit.toPlainText()))
+        self.dlg.addonmap.clicked.connect(self.add_on_map_task)
         self.dlg.question.returnPressed.connect(self.send_message)
 
         # enable history questions
@@ -453,3 +802,11 @@ class qchatgpt:
 
         self.dlg.chatgpt_ans.append(self.answers[0])
         self.dlg.clear_ans.clicked.connect(self.clear_ans_fun)
+        if not self.dlg.chatgpt_edit_btn.isChecked():
+            self.dlg.chatgpt_edit.setVisible(False)
+        self.dlg.chatgpt_edit_btn.clicked.connect(self.chat_edit_lastai)
+        size_policy = self.dlg.chatgpt_edit.sizePolicy()
+        size_policy.setVerticalPolicy(QSizePolicy.Ignored)
+        self.dlg.chatgpt_edit.setSizePolicy(size_policy)
+
+        self.dlg.chatgpt_python_console.clicked.connect(self.chat_python_console)
