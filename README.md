@@ -10,11 +10,9 @@ alt="QChatGPT: Speak with AI" width="240" height="180" border="5" /></a>
 
 ![https://github.com/Mariosmsk/QChatGPT/blob/main/example.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example.png)
 
-![https://github.com/Mariosmsk/QChatGPT/blob/main/example2.png](https://github.
-com/Mariosmsk/QChatGPT/blob/main/example2.png)
+![https://github.com/Mariosmsk/QChatGPT/blob/main/example2.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example2.png)
 
-![https://github.com/Mariosmsk/QChatGPT/blob/main/example3.png](https://github.
-com/Mariosmsk/QChatGPT/blob/main/example3.png)
+![https://github.com/Mariosmsk/QChatGPT/blob/main/example3.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example3.png)
 
 ## Installation notes
 
