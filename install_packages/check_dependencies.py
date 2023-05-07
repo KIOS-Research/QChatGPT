@@ -11,6 +11,12 @@ def check(required_packages):
         try:
             importlib.import_module(package)
         except ImportError:
+            if package == 'SpeechRecognition':
+                try:
+                    import speech_recognition as sr
+                    continue
+                except:
+                    pass
             missing_packages.append(package)
 
     try:

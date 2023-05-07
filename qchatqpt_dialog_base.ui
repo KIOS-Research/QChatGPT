@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>863</width>
-    <height>416</height>
+    <width>1203</width>
+    <height>375</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,14 +28,35 @@
         <item row="0" column="0">
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QTextBrowser" name="chatgpt_ans">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="layout_custom">
+            <item>
+             <widget class="QTextEdit" name="chatgpt_edit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="html">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextBrowser" name="chatgpt_ans">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -66,9 +87,53 @@
              </spacer>
             </item>
             <item>
-             <widget class="QCheckBox" name="image">
+             <widget class="QRadioButton" name="general">
+              <property name="text">
+               <string>General</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="image">
               <property name="text">
                <string>Image</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="qgisui">
+              <property name="text">
+               <string>QGIS</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="qgiscode">
+              <property name="text">
+               <string>QCode</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chatgpt_edit_btn">
+              <property name="text">
+               <string>Modify AI</string>
               </property>
              </widget>
             </item>
@@ -78,7 +143,83 @@
                <string>e.g. Give me a geojson format for Cyprus cities</string>
               </property>
               <property name="text">
-               <string>Add on map the last AI</string>
+               <string>Add/Execute</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="save_last_ans">
+              <property name="focusPolicy">
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="text">
+               <string>Save</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_2">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chatgpt_python_console">
+              <property name="text">
+               <string>Console</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_3">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="voiceresponse">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Voice Response</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="voicestop">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Stop Voice</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_7">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -88,7 +229,7 @@
                <enum>Qt::NoFocus</enum>
               </property>
               <property name="text">
-               <string>Export</string>
+               <string>Export Chat</string>
               </property>
              </widget>
             </item>
@@ -98,7 +239,20 @@
                <enum>Qt::NoFocus</enum>
               </property>
               <property name="text">
-               <string>Clear</string>
+               <string>Clear Chat</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_4">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -144,6 +298,106 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="Line" name="line_5">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="microphone">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::StrongFocus</enum>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>Mic (sec)</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="audio_duration">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimum">
+               <number>5</number>
+              </property>
+              <property name="maximum">
+               <number>60</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="microphone_send">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Send</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="use_voice">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Voice</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="whisper">
+              <property name="toolTip">
+               <string>Using openai key.</string>
+              </property>
+              <property name="text">
+               <string>Whisper</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_6">
+              <property name="maximumSize">
+               <size>
+                <width>3</width>
+                <height>31</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>
@@ -168,7 +422,7 @@
                <string>&lt;a href=&quot;https://platform.openai.com/docs/models/overview&quot;&gt;Models &lt;/a&gt;:</string>
               </property>
               <property name="openExternalLinks">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -400,17 +654,13 @@
               <property name="wordWrap">
                <bool>true</bool>
               </property>
+              <property name="openExternalLinks">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="custom_apikey">
-              <property name="focusPolicy">
-               <enum>Qt::ClickFocus</enum>
-              </property>
-              <property name="toolTip">
-               <string>If you want, you can use your API key.</string>
-              </property>
-             </widget>
+             <widget class="QgsPasswordLineEdit" name="custom_apikey"/>
             </item>
             <item>
              <spacer name="horizontalSpacer_2">
@@ -449,6 +699,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsPasswordLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qgspasswordlineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
