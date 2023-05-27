@@ -4,8 +4,8 @@ A plugin integration between QGIS and openai API. Displays the results from open
 Source: https://openai.com/
 
 QChatGPT: Speak with AI<p>
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=24vQSzJjWSs
-" target="_blank"><img src="http://img.youtube.com/vi/24vQSzJjWSs/0.jpg"
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Uo1gdf0eH7o
+" target="_blank"><img src="http://img.youtube.com/vi/Uo1gdf0eH7o/0.jpg"
 alt="QChatGPT: Speak with AI" width="240" height="180" border="5" /></a>
 
 ![https://github.com/Mariosmsk/QChatGPT/blob/main/example.png](https://github.com/Mariosmsk/QChatGPT/blob/main/example.png)
