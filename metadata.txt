@@ -6,21 +6,23 @@
 name=QChatGPT
 qgisMinimumVersion=3.0
 description=A plugin integration between QGIS and openai API.
-version=0.5
+version=0.6
 author=Marios S. Kyriakou, KIOS Research and Innovation Center of Excellence (KIOS CoE)
 email=mariosmsk@gmail.com
 
 about=A plugin integration between QGIS and openai API. Displays the results from openai in QGIS.
 
-tracker=https://github.com/Mariosmsk/QChatGPT/issues
-repository=https://github.com/Mariosmsk/QChatGPT
+tracker=https://github.com/KIOS-Research/QChatGPT/issues
+repository=https://github.com/KIOS-Research/QChatGPT
 # End of mandatory metadata
 
 # Recommended items:
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-05-06  QChatGPT 0.5:
+changelog=2023-05-06  QChatGPT 0.6:
+		 Transfer repo to KIOS Research and Innovation Center of Excellence (KIOS CoE).
+          2023-05-06  QChatGPT 0.5:
 		 Implement AI voice response feature.
 		 Add microphone button for input with a specified duration.
 		 Add option to stop voice response.
