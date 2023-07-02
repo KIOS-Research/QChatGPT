@@ -2,3 +2,4 @@ openai
 SpeechRecognition
 pyaudio
 pyttsx3
+pdfgpt
