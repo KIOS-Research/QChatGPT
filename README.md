@@ -22,6 +22,7 @@ pip install openai
 pip install SpeechRecognition 
 pip install pyaudio 
 pip install pyttsx3
+pip install pdfgpt
 ```
 
 ### macOS + QGIS 3

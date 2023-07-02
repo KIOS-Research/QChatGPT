@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1203</width>
+    <width>1259</width>
     <height>375</height>
    </rect>
   </property>
@@ -93,6 +93,13 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="checked">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="pdfchat">
+              <property name="text">
+               <string>PDF</string>
               </property>
              </widget>
             </item>
@@ -419,7 +426,7 @@ p, li { white-space: pre-wrap; }
                <string>The model which will generate the completion.</string>
               </property>
               <property name="text">
-               <string>&lt;a href=&quot;https://platform.openai.com/docs/models/overview&quot;&gt;Models &lt;/a&gt;:</string>
+               <string>&lt;a href=&quot;https://platform.openai.com/docs/models/overview&quot;&gt;Models &lt;/a&gt;:   </string>
               </property>
               <property name="openExternalLinks">
                <bool>true</bool>
@@ -436,7 +443,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>40</width>
+                <width>46</width>
                 <height>20</height>
                </size>
               </property>
@@ -459,6 +466,11 @@ p, li { white-space: pre-wrap; }
               <item>
                <property name="text">
                 <string>text-davinci-003</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>gpt-4</string>
                </property>
               </item>
               <item>
@@ -639,6 +651,19 @@ p, li { white-space: pre-wrap; }
               </item>
              </widget>
             </item>
+            <item>
+             <spacer name="horizontalSpacer_8">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
           <item>
@@ -649,7 +674,7 @@ p, li { white-space: pre-wrap; }
                <string>If you want, you can use your API key.</string>
               </property>
               <property name="text">
-               <string>&lt;a href=&quot;https://platform.openai.com/account/api-keys&quot;&gt;Use your API key&lt;/a&gt;</string>
+               <string>&lt;a href=&quot;https://platform.openai.com/account/api-keys&quot;&gt;Use your API key&lt;/a&gt; </string>
               </property>
               <property name="wordWrap">
                <bool>true</bool>
@@ -664,6 +689,68 @@ p, li { white-space: pre-wrap; }
             </item>
             <item>
              <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_4">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Please select PDF from Chat.</string>
+              </property>
+              <property name="text">
+               <string>Use PDF file:       </string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="pdf_path">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Please select PDF from Chat.</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_7">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>

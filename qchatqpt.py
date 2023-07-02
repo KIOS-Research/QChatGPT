@@ -47,7 +47,7 @@ from .install_packages.check_dependencies import check
 
 API_EXIST = False
 try:
-    check(['openai', 'SpeechRecognition', 'pyaudio', 'sounddevice', 'pyttsx3'])
+    check(['openai', 'SpeechRecognition', 'pyaudio', 'sounddevice', 'pyttsx3', 'pdfgpt'])
 finally:
     import openai
 
@@ -59,7 +59,10 @@ finally:
         import pyttsx3
     except:
         pass
-
+    try:
+        from pdfgpt import *
+    except:
+        pass
     API_EXIST = True
 
 try:
@@ -114,6 +117,10 @@ class qchatgpt:
         """
         # Save reference to the QGIS interface
 
+        self.pdf_d = None
+        self.pdf_df = None
+        self.pdf_num_pages = None
+        self.pdf_file = None
         self.engine2 = None
         self.task_read2 = None
         self.engine = None
@@ -268,6 +275,22 @@ class qchatgpt:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def showYesNoMessage(self, title, msg, yesMethod, icon):
+        msgBox = QMessageBox()
+        if icon == 'Warning':
+            msgBox.setIcon(QMessageBox.Warning)
+        if icon == 'Info':
+            msgBox.setIcon(QMessageBox.Information)
+        msgBox.setWindowTitle(title)
+        msgBox.setText(msg)
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        buttonY = msgBox.button(QMessageBox.Yes)
+        buttonY.setText('Yes')
+        buttonY.clicked.connect(yesMethod)
+        buttonNo = msgBox.button(QMessageBox.No)
+        buttonNo.setText('No')
+        msgBox.exec_()
+
     def showMessage(self, title, msg, button, icon, fontsize=9):
         msgBox = QMessageBox()
         if icon == 'Warning':
@@ -340,7 +363,12 @@ class qchatgpt:
             if ask:
                 try:
                     question_history = " ".join(self.history) + " " + self.question
-                    if self.dlg.image.isChecked():
+                    if self.dlg.pdfchat.isChecked():
+                        prompt = self.pdf_d.generatePrompt(self.pdf_df, self.pdf_num_pages, self.question)
+                        print(prompt)
+                        self.last_ans = self.pdf_d.sendPrompt(prompt, model="gpt-3.5-turbo")
+                        print(self.last_ans)
+                    elif self.dlg.image.isChecked():
                         self.response = openai.Image.create(
                             prompt=self.question,
                             n=1,
@@ -357,7 +385,7 @@ class qchatgpt:
                         document = QTextDocument()
                         document.setHtml("<img src='{}'>".format(data_uri))
                     else:
-                        if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"]:
+                        if model in ["gpt-3.5-turbo", "gpt-3.5-turbo-0301", "gpt-4"]:
                             self.response = openai.ChatCompletion.create(
                                 model=model,
                                 max_tokens=max_tokens - len(self.question),
@@ -681,6 +709,26 @@ class qchatgpt:
                 self.engine.runAndWait()
                 self.engine.stop()
 
+    def load_pdf_openai(self):
+        self.pdf_d = PDFBot(openai_key=self.dlg.custom_apikey.text())
+        extracted_text, self.pdf_num_pages = self.pdf_d.generateText(file_path=self.pdf_file)
+        self.pdf_df = self.pdf_d.generateEmbeddings(extracted_text)
+
+    def upload_pdf(self):
+        path = QFileDialog.getOpenFileName(None, 'Choose File', os.path.join(os.path.join(os.path.expanduser('~')),
+                                                                             'Desktop'), "PDF(*.pdf)")[0]
+        if len(path) > 0:
+            self.pdf_file = path
+            self.dlg.pdfchat.setEnabled(True)
+            self.dlg.pdf_path.setText(self.pdf_file)
+
+            self.showYesNoMessage("QChatGPT", "Do you want to continue to read the PDF file using your openai API "
+                                              "key?", self.load_pdf_openai, "Info")
+        else:
+            self.pdf_file = None
+            self.dlg.pdf_path.setText('')
+            self.dlg.pdfchat.setEnabled(False)
+
     def stopped(self, task):
         try:
             self.voice_stop()
@@ -766,6 +814,7 @@ class qchatgpt:
 
         self.questions = []
         self.answers = ['Welcome to the QChatGPT.']
+        self.dlg.pdfchat.setEnabled(False)
 
         # self.dlg.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.WindowMinMaxButtonsHint |
         #                        Qt.WindowCloseButtonHint)
@@ -776,6 +825,7 @@ class qchatgpt:
         self.dlg.microphone.clicked.connect(self.microphone_task)
         self.dlg.voiceresponse.clicked.connect(self.voice_repsonse)
         self.dlg.voicestop.clicked.connect(self.stopped)
+        self.dlg.toolButton.clicked.connect(self.upload_pdf)
         palette = self.dlg.microphone.palette()
         background_color = palette.color(QPalette.Button)
         self.background__default_color = background_color.getRgb()
