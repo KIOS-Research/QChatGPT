@@ -20,9 +20,11 @@ repository=https://github.com/KIOS-Research/QChatGPT
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-05-06  QChatGPT 0.6:
+changelog=2023-07-02  QChatGPT 0.6:
 		 Transfer repo to KIOS Research and Innovation Center of Excellence (KIOS CoE).
-          2023-05-06  QChatGPT 0.5:
+		 Some fixes.
+		 Add pdfgpt package to talk with your pdf in QGIS.
+      2023-05-06  QChatGPT 0.5:
 		 Implement AI voice response feature.
 		 Add microphone button for input with a specified duration.
 		 Add option to stop voice response.
