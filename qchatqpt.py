@@ -447,9 +447,9 @@ class qchatgpt:
     def add_completed(self, task):
         pass
 
-    def add_on_map_task(self):
-        self.task_add = QgsTask.fromFunction(f'QChatGPT Add files..', self.add_on_map, on_finished=self.add_completed)
-        QgsApplication.taskManager().addTask(self.task_add)
+    # def add_on_map_task(self):
+    #     self.task_add = QgsTask.fromFunction(f'QChatGPT Add files..', self.add_on_map, on_finished=self.add_completed)
+    #     QgsApplication.taskManager().addTask(self.task_add)
 
     def add_on_map(self, task):
         # Use regular expression to find the link
@@ -783,7 +783,8 @@ class qchatgpt:
         self.dlg.export_ans.clicked.connect(lambda: self.export_messages(ans=self.answers))
         self.dlg.save_last_ans.clicked.connect(lambda: self.export_messages(text='Save AI',
                                                                             ans=self.dlg.chatgpt_edit.toPlainText()))
-        self.dlg.addonmap.clicked.connect(self.add_on_map_task)
+        # self.dlg.addonmap.clicked.connect(self.add_on_map_task)
+        self.dlg.addonmap.clicked.connect(self.add_on_map)
         self.dlg.question.returnPressed.connect(self.send_message)
 
         # enable history questions
