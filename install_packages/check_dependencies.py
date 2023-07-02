@@ -53,7 +53,7 @@ def check(required_packages):
                         importlib.import_module(package)
 
     # Upgrade openai
-    if not update_version and not missing_packages:
+    if update_version:
         message = "The package openai needs an update for the plugin QChatGPT:\n\n"
         message += "\n".join(missing_packages)
         message += "\n\nWould you like to update now?"
