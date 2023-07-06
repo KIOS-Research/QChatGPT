@@ -1,3 +1,6 @@
+![QChatGPT Downloads](https://img.shields.io/badge/dynamic/json?formatter=metric&color=green&label=QChatGPT-downloads&query=%24.QChatGPT.downloads&url=https://raw.githubusercontent.com/Mariosmsk/qgis-plugins-downloads/main/data/plugins.json)
+
+
 # QChatGPT
 A plugin integration between QGIS and openai API. Displays the results from openai in QGIS.
 
