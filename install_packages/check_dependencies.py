@@ -10,6 +10,10 @@ def check(required_packages):
     for package in required_packages:
         try:
             importlib.import_module(package)
+            if package == 'pdfgpt':
+                import pdfgpt
+                if pdfgpt.__version__ != '0.2.2':
+                    missing_packages.append('pdfgpt==0.2.2')
         except ImportError:
             if package == 'SpeechRecognition':
                 try:
@@ -30,7 +34,7 @@ def check(required_packages):
     if missing_packages:
         message = "The following Python packages are required to use the plugin QChatGPT:\n\n"
         message += "\n".join(missing_packages)
-        message += "\n\nWould you like to install them now?"
+        message += "\n\nWould you like to install them now? After installation please restart QGIS."
 
         reply = QMessageBox.question(None, 'Missing Dependencies', message,
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
