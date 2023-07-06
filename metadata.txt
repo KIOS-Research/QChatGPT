@@ -6,7 +6,7 @@
 name=QChatGPT
 qgisMinimumVersion=3.0
 description=A plugin integration between QGIS and openai API.
-version=0.6
+version=0.7
 author=Marios S. Kyriakou, KIOS Research and Innovation Center of Excellence (KIOS CoE)
 email=mariosmsk@gmail.com
 
@@ -20,7 +20,9 @@ repository=https://github.com/KIOS-Research/QChatGPT
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=2023-07-02  QChatGPT 0.6:
+changelog=2023-07-02  QChatGPT 0.7:
+		 Use pdfgpt v0.2.2 / Update dependencies.
+	  2023-07-02  QChatGPT 0.6:
 		 Transfer repo to KIOS Research and Innovation Center of Excellence (KIOS CoE).
 		 Some fixes.
 		 Add pdfgpt package to talk with your pdf in QGIS.

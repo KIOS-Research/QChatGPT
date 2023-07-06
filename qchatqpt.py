@@ -365,9 +365,7 @@ class qchatgpt:
                     question_history = " ".join(self.history) + " " + self.question
                     if self.dlg.pdfchat.isChecked():
                         prompt = self.pdf_d.generatePrompt(self.pdf_df, self.pdf_num_pages, self.question)
-                        print(prompt)
                         self.last_ans = self.pdf_d.sendPrompt(prompt, model="gpt-3.5-turbo")
-                        print(self.last_ans)
                     elif self.dlg.image.isChecked():
                         self.response = openai.Image.create(
                             prompt=self.question,
@@ -713,6 +711,7 @@ class qchatgpt:
         self.pdf_d = PDFBot(openai_key=self.dlg.custom_apikey.text())
         extracted_text, self.pdf_num_pages = self.pdf_d.generateText(file_path=self.pdf_file)
         self.pdf_df = self.pdf_d.generateEmbeddings(extracted_text)
+        self.showMessage("QChatGPT", f"Please go to the `Chat` and use PDF to chat with your file.", "OK", "Info")
 
     def upload_pdf(self):
         path = QFileDialog.getOpenFileName(None, 'Choose File', os.path.join(os.path.join(os.path.expanduser('~')),
@@ -723,7 +722,7 @@ class qchatgpt:
             self.dlg.pdf_path.setText(self.pdf_file)
 
             self.showYesNoMessage("QChatGPT", "Do you want to continue to read the PDF file using your openai API "
-                                              "key?", self.load_pdf_openai, "Info")
+                                              "key? Need time to load the file.", self.load_pdf_openai, "Info")
         else:
             self.pdf_file = None
             self.dlg.pdf_path.setText('')
